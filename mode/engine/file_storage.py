@@ -1,19 +1,12 @@
 #!/usr/bin/python3
-"""
-module containing FileStorage used for file storage
-"""
+"""This module defines a class to manage file storage for hbnb clone"""
 import json
 import models
 
 
 class FileStorage:
-    """
-    serializes and deserializes instances to and from JSON file
-    saved into file_path
-
-    """
-
-    __file_path = "file.json"
+    """This class manages storage of hbnb models in JSON format"""
+    __file_path = 'file.json'
     __objects = {}
 
     def all(self, cls=None):
@@ -57,6 +50,7 @@ class FileStorage:
                 self.__objects[id] = temp_instance
         except:
             pass
+
 
     def close(self):
         """display our HBNB data

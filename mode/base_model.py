@@ -1,10 +1,7 @@
 #!/usr/bin/python3
-"""
-    Module containing BaseModel
-"""
-from uuid import uuid4
+"""This module defines a base class for all models in our hbnb clone"""
+import uuid
 from datetime import datetime
-import models
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from os import environ
@@ -15,6 +12,7 @@ if (storage_engine == "db"):
     Base = declarative_base()
 else:
     Base = object
+
 
 
 class BaseModel():
