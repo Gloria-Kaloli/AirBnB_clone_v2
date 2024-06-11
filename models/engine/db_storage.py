@@ -1,86 +1,83 @@
 #!/usr/bin/python3
-"""DB storage
-"""
-import models
-from models.base_model import BaseModel, Base
-from models import city, state
-from os import environ, getenv
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
-HBNB_MYSQL_USER = getenv('HBNB_MYSQL_USER')
-HBNB_MYSQL_PWD = getenv('HBNB_MYSQL_PWD')
-HBNB_MYSQL_HOST = getenv('HBNB_MYSQL_HOST')
-HBNB_MYSQL_DB = getenv('HBNB_MYSQL_DB')
+""" new class for sqlAlchemy """
+from os import getenv
+from models.base_model import Base
+from models.state import State
+from models.city import City
+from models.user import User
+from models.place import Place
+from models.review import Review
+from models.amenity import Amenity
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import (create_engine)
+from sqlalchemy.ext.declarative import declarative_base
 
 
 class DBStorage:
-    """database storage for mysql conversion
-    """
+    """ create tables in environmental"""
     __engine = None
     __session = None
 
     def __init__(self):
-        """initializer for DBStorage"""
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.format(
-            HBNB_MYSQL_USER,
-            HBNB_MYSQL_PWD,
-            HBNB_MYSQL_HOST,
-            HBNB_MYSQL_DB), pool_pre_ping=True)
+        user = getenv("HBNB_MYSQL_USER")
+        passwd = getenv("HBNB_MYSQL_PWD")
+        db = getenv("HBNB_MYSQL_DB")
+        host = getenv("HBNB_MYSQL_HOST")
         env = getenv("HBNB_ENV")
-        if (env == "test"):
+
+        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'
+                                      .format(user, passwd, host, db),
+                                      pool_pre_ping=True)
+
+        if env == "test":
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
-        """Query the current session and list all instances of cls
+        """returns a dictionary
+        Return:
+            returns a dictionary of __object
         """
-        result = {}
+        _dict = {}
         if cls:
-            for row in self.__session.query(cls).all():
-                key = "{}.{}".format(cls.__name__, row.id)
-                row.to_dict()
-                result.update({key: row})
+            if type(cls) is str:
+                cls = eval(cls)
+            _query = self.__session.query(cls)
+            for element in _query:
+                key = "{}.{}".format(type(element).__name__, element.id)
+                _dict[key] = element
         else:
-            for table in models.dummy_tables:
-                cls = models.dummy_tables[table]
-                for row in self.__session.query(cls).all():
-                    key = "{}.{}".format(cls.__name__, row.id)
-                    row.to_dict()
-                    result.update({key: row})
-        return result
-
-    def rollback(self):
-        """rollback changes
-        """
-        self.__session.rollback()
+            list_a = [State, City, User, Place, Review, Amenity]
+            for clas in list_a:
+                _query = self.__session.query(clas)
+                for element in _query:
+                    key = "{}.{}".format(type(element).__name__, element.id)
+                    _dict[key] = element
+        return (_dict)
 
     def new(self, obj):
-        """add object to current session
+        """add a new element in the table
         """
         self.__session.add(obj)
+    def reload(self):
+        """configuration
+        """
+        Base.metadata.create_all(self.__engine)
+        _sec = sessionmaker(bind=self.__engine, expire_on_commit=False)
+        Session = scoped_session(_sec)
+        self.__session = Session()
 
+    def close(self):
+        """ calls remove()
+        """
+        self.__session.close()
+    
     def save(self):
-        """commit current done work
+        """save changes
         """
         self.__session.commit()
 
     def delete(self, obj=None):
-        """delete obj from session
+        """delete an element in the table
         """
-        if (obj is None):
-            self.__session.delete(obj)
-
-    def reload(self):
-        """reload the session
-        """
-        Base.metadata.create_all(self.__engine)
-        Session = sessionmaker(bind=self.__engine, expire_on_commit=False)
-        Scope = scoped_session(Session)
-        self.__session = Scope()
-
-    def close(self):
-        """display our HBNB data
-        """
-        self.__session.__class__.close(self.__session)
-        self.reload()
+        if obj:
+            self.session.delete(obj)
